@@ -1,0 +1,7 @@
+arviz
+matplotlib
+numpy
+pandas
+pymc
+scipy
+dtaidistance

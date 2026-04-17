@@ -3,11 +3,32 @@ __pycache__/
 .venv/
 env/
 
-data/raw/
-data/processed/
-data/analysis_ready/
+data/raw/*
+!data/raw/
+!data/raw/.gitkeep
 
-outputs/
+data/processed/*
+!data/processed/
+!data/processed/.gitkeep
+
+data/analysis_ready/*
+!data/analysis_ready/
+!data/analysis_ready/.gitkeep
+
+outputs/*
+!outputs/
+outputs/tables/*
+!outputs/tables/
+!outputs/tables/.gitkeep
+outputs/figures/*
+!outputs/figures/
+!outputs/figures/.gitkeep
+outputs/models/*
+!outputs/models/
+!outputs/models/.gitkeep
+outputs/text/*
+!outputs/text/
+!outputs/text/.gitkeep
 
 .DS_Store
 Thumbs.db

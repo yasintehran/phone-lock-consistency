@@ -1,4 +1,4 @@
-# Digital Phenotyping Consistency Pipeline: Phone Unlock Features and Depression Change
+# Phone Lock Consistency Pipeline
 
 A reproducible Python analysis pipeline for evaluating the temporal consistency of smartphone phone-unlock behavioral features in relation to changes in depression scores.
 
@@ -31,6 +31,7 @@ The raw dataset is **not included** in this public repository. Please obtain the
 
 ## Repository Structure
 
+```text
 phone-lock-consistency/
 │
 ├── data/
@@ -62,7 +63,7 @@ phone-lock-consistency/
     ├── run_consistency_metrics.py
     ├── run_bayesian_analysis.py
     └── run_all.py
-
+```
 
 ---
 
@@ -118,8 +119,9 @@ This improves reproducibility of model estimates.
 
 ## Installation
 
+```bash
 pip install -r requirements.txt
-
+```
 
 ---
 
@@ -127,7 +129,9 @@ pip install -r requirements.txt
 
 From the project root:
 
+```bash
 python -m scripts.run_all
+```
 
 ---
 

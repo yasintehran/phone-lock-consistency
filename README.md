@@ -8,9 +8,9 @@ This repository was developed as part of a Master's thesis in Psychology at Upps
 
 ## Project Purpose
 
-Digital phenotyping studies often prioritize prediction accuracy, but less attention has been given to whether behavioral features behave consistently in relation to the psychological construct they are intended to reflect.
+Digital phenotyping research often prioritizes predictive performance, while less attention has been given to whether behavioral features behave consistently in relation to the psychological construct they are intended to reflect.
 
-This project evaluates whether phone-unlock features demonstrate temporal consistency with depression change, using:
+This project evaluates whether phone-unlock features demonstrate temporal consistency with depression change using:
 
 * baseline level change
 * variability change
@@ -42,6 +42,10 @@ phone-lock-consistency/
 ├── outputs/
 │   ├── tables/
 │   ├── figures/
+│   │   ├── scatter_regression/
+│   │   ├── correlation_posterior/
+│   │   ├── regression_beta_posterior/
+│   │   └── regression_parameters_posterior/
 │   ├── models/
 │   └── text/
 │
@@ -65,6 +69,8 @@ phone-lock-consistency/
     └── run_all.py
 ```
 
+Each figure category automatically contains feature-specific subfolders for the extracted behavioral measures.
+
 ---
 
 ## Main Behavioral Features
@@ -79,7 +85,7 @@ Daily features extracted from phone unlock logs:
 
 ## Consistency Metrics
 
-For 1–4 week individualized pre/post windows, the pipeline computes:
+For individualized 1–4 week pre/post windows, the pipeline computes:
 
 * baseline pre/post values and change
 * variance pre/post values and change
@@ -100,8 +106,10 @@ Outputs include:
 * Bayesian regressions
 * Bayes factors
 * posterior summaries
+* scatterplots with regression lines
+* posterior distribution figures
 * APA-style text outputs
-* figures and summary tables
+* summary tables
 
 ---
 
@@ -146,4 +154,3 @@ python -m scripts.run_all
 ## Thesis Context
 
 This repository accompanies a Master's thesis focused on temporal consistency as a methodological consideration in digital phenotyping research.
-

@@ -5,7 +5,7 @@ from typing import Dict
 import pandas as pd
 
 from .config import PipelineConfig
-from .plotting import create_scatter_with_regression_plot
+from .plotting import create_scatter_with_regression_plot, ensure_feature_figure_dir
 
 
 def apa_sentence_correlation(row: pd.Series) -> str:
@@ -50,9 +50,13 @@ def save_apa_outputs(
     reg_sentences = [apa_sentence_regression(row) for _, row in summary_df.iterrows()]
 
     (config.text_dir / "apa_correlation_sentences.txt").write_text(
-"\n".join(corr_sentences), encoding="utf-8")
+        "\n".join(corr_sentences),
+        encoding="utf-8",
+    )
     (config.text_dir / "apa_regression_sentences.txt").write_text(
-"\n".join(reg_sentences), encoding="utf-8")
+        "\n".join(reg_sentences),
+        encoding="utf-8",
+    )
 
     predictor_to_outcome = {
         "baseline_change": "depression_change",
@@ -61,13 +65,33 @@ def save_apa_outputs(
         "magnitude_sensitive_dtw_distance": "abs_depression_change",
     }
 
+    predictor_short_names = {
+        "baseline_change": "baseline_change",
+        "variance_change": "variance_change",
+        "zstandardized_dtw_distance": "pattern_dtw",
+        "magnitude_sensitive_dtw_distance": "magnitude_dtw",
+    }
+
     for _, row in summary_df.iterrows():
         feature_name = row["feature"]
         weeks = int(row["number_of_weeks"])
         predictor = row["predictor"]
         outcome = predictor_to_outcome[predictor]
+
         metric_df = metric_tables[feature_name]
         plot_df = metric_df[metric_df["number_of_weeks"] == weeks]
-        title = f"{feature_name.replace('_', ' ').title()} ({weeks} weeks): {predictor} vs {outcome}"
-        output_path = config.figures_dir / f"{feature_name}_{weeks}w_{predictor}_vs_{outcome}.png"
-        create_scatter_with_regression_plot(plot_df, predictor, outcome, title, output_path)
+
+        scatter_feature_dir = ensure_feature_figure_dir(config.scatter_figure_dir, feature_name)
+        short_predictor = predictor_short_names[predictor]
+
+        output_path = (
+            scatter_feature_dir
+            / f"{feature_name}_{weeks}w_{short_predictor}_scatter.png"
+        )
+
+        create_scatter_with_regression_plot(
+            df=plot_df,
+            predictor=predictor,
+            outcome=outcome,
+            output_path=output_path,
+        )

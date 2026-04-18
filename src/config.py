@@ -64,5 +64,22 @@ class PipelineConfig:
     def text_dir(self) -> Path:
         return self.output_root_path / "text"
 
+    @property
+    def scatter_figure_dir(self) -> Path:
+        return self.figures_dir / "scatter_regression"
+
+    @property
+    def correlation_posterior_dir(self) -> Path:
+        return self.figures_dir / "correlation_posterior"
+
+    @property
+    def regression_beta_posterior_dir(self) -> Path:
+        return self.figures_dir / "regression_beta_posterior"
+
+    @property
+    def regression_parameters_posterior_dir(self) -> Path:
+        return self.figures_dir / "regression_parameters_posterior" 
+    
+    
     def as_dict(self) -> dict:
         return asdict(self)

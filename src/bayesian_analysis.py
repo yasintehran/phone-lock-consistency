@@ -12,6 +12,12 @@ from scipy.stats import gaussian_kde
 from .clean_analysis_sample import apply_analysis_specific_exclusion
 from .config import PipelineConfig
 from .utils import evidence_label_from_bf10
+from .plotting import (
+    ensure_feature_figure_dir,
+    plot_correlation_posterior,
+    plot_regression_beta_posterior,
+    plot_regression_parameter_panel,
+)
 
 
 def calculate_correlation_bayes_factor(
@@ -26,14 +32,21 @@ def calculate_correlation_bayes_factor(
 ):
     x = np.asarray(x, dtype=np.float64)
     y = np.asarray(y, dtype=np.float64)
+
     mask = np.isfinite(x) & np.isfinite(y)
     x = x[mask]
     y = y[mask]
+
     if len(x) < minimum_points_for_analysis:
         return None, None
 
-    x_std = (x - np.mean(x)) / np.std(x)
-    y_std = (y - np.mean(y)) / np.std(y)
+    x_sd = np.std(x)
+    y_sd = np.std(y)
+    if x_sd == 0 or y_sd == 0:
+        return None, None
+
+    x_std = (x - np.mean(x)) / x_sd
+    y_std = (y - np.mean(y)) / y_sd
     observed_data = np.vstack([x_std, y_std]).T
 
     with pm.Model() as model:
@@ -43,6 +56,7 @@ def calculate_correlation_bayes_factor(
             pm.math.stack([rho, 1.0]),
         ])
         pm.MvNormal("likelihood", mu=np.zeros(2), cov=cov, observed=observed_data)
+
         trace = pm.sample(
             draws=n_samples,
             tune=tune,
@@ -54,6 +68,7 @@ def calculate_correlation_bayes_factor(
         )
 
     rho_samples = trace.posterior["rho"].values.flatten()
+
     try:
         kde = gaussian_kde(rho_samples)
         posterior_at_0 = float(kde(0)[0])
@@ -62,6 +77,7 @@ def calculate_correlation_bayes_factor(
         bf10 = 1 / bf01 if bf01 != 0 else np.inf
     except Exception:
         bf10 = None
+
     return bf10, trace
 
 
@@ -77,9 +93,11 @@ def calculate_regression_bayes_factor(
 ):
     x = np.asarray(x, dtype=np.float64)
     y = np.asarray(y, dtype=np.float64)
+
     mask = np.isfinite(x) & np.isfinite(y)
     x = x[mask]
     y = y[mask]
+
     if len(x) < minimum_points_for_analysis:
         return None, None
 
@@ -96,8 +114,10 @@ def calculate_regression_bayes_factor(
             alpha = pm.Normal("alpha", mu=0, sigma=5)
             beta = pm.Normal("beta", mu=0, sigma=5)
             sigma = pm.HalfNormal("sigma", sigma=5)
+
             mu = alpha + beta * x_z
             pm.Normal("y", mu=mu, sigma=sigma, observed=y_z)
+
             trace = pm.sample(
                 draws=n_samples,
                 tune=tune,
@@ -114,6 +134,7 @@ def calculate_regression_bayes_factor(
         prior_density_at_zero = float(stats.norm(0, 5).pdf(0))
         bf01 = posterior_density_at_zero / prior_density_at_zero
         bf10 = 1 / bf01 if bf01 != 0 else np.inf
+
         return bf10, trace
     except Exception:
         return None, None
@@ -122,8 +143,10 @@ def calculate_regression_bayes_factor(
 def summarize_correlation(trace, bayes_factor):
     if trace is None:
         return None
+
     summary = az.summary(trace, var_names=["rho"], hdi_prob=0.95)
     row = summary.loc["rho"]
+
     return {
         "mean": float(row["mean"]),
         "sd": float(row["sd"]),
@@ -137,6 +160,7 @@ def summarize_correlation(trace, bayes_factor):
 def summarize_regression(trace, bayes_factor):
     if trace is None:
         return None
+
     summary = az.summary(trace, var_names=["alpha", "beta", "sigma"], hdi_prob=0.95)
 
     def pull(name):
@@ -176,10 +200,15 @@ def run_bayesian_analysis_for_metric_df(
     }
 
     all_results: dict = {}
-    summary_rows: List[dict] = []
+    summary_rows: list[dict] = []
+
+    corr_feature_dir = ensure_feature_figure_dir(config.correlation_posterior_dir, feature_name)
+    reg_beta_feature_dir = ensure_feature_figure_dir(config.regression_beta_posterior_dir, feature_name)
+    reg_param_feature_dir = ensure_feature_figure_dir(config.regression_parameters_posterior_dir, feature_name)
 
     for weeks, df_week in metric_df.groupby("number_of_weeks"):
         week_results: dict = {}
+
         for predictor in predictors:
             outcome = outcomes[predictor]
             filtered_df = apply_analysis_specific_exclusion(df_week, predictor, outcome)
@@ -209,6 +238,22 @@ def run_bayesian_analysis_for_metric_df(
 
             corr_summary = summarize_correlation(corr_trace, corr_bf10)
             reg_summary = summarize_regression(reg_trace, reg_bf10)
+
+            short_predictor = {
+                "baseline_change": "baseline_change",
+                "variance_change": "variance_change",
+                "zstandardized_dtw_distance": "pattern_dtw",
+                "magnitude_sensitive_dtw_distance": "magnitude_dtw",
+            }[predictor]
+
+            corr_plot_path = corr_feature_dir / f"{feature_name}_{weeks}w_{short_predictor}_corr_posterior.png"
+            reg_beta_plot_path = reg_beta_feature_dir / f"{feature_name}_{weeks}w_{short_predictor}_beta_posterior.png"
+            reg_param_plot_path = reg_param_feature_dir / f"{feature_name}_{weeks}w_{short_predictor}_parameters_posterior.png"
+
+            plot_correlation_posterior(corr_trace, corr_plot_path)
+            plot_regression_beta_posterior(reg_trace, reg_beta_plot_path)
+            plot_regression_parameter_panel(reg_trace, reg_param_plot_path)
+
             week_results[predictor] = {
                 "feature": feature_name,
                 "number_of_weeks": int(weeks),

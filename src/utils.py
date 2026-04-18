@@ -22,6 +22,10 @@ def ensure_directories(config: PipelineConfig) -> None:
         config.figures_dir,
         config.models_dir,
         config.text_dir,
+        config.scatter_figure_dir,
+        config.correlation_posterior_dir,
+        config.regression_beta_posterior_dir,
+        config.regression_parameters_posterior_dir,
     ]:
         path.mkdir(parents=True, exist_ok=True)
 
